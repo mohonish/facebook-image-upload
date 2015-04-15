@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html ng-app="fb-upload">
+<head>
+	
+	<title>FB Upload Image</title>
+	
+	<!--<script type="text/javascript" src="http://connect.facebook.net/en_us/all.js"></script>-->
+	<script type="text/javascript" src="libs/angular.min.js"></script>
+	<script type="text/javascript" src="libs/ngFacebook.js"></script>
+	<script type="text/javascript" src="js/fb-upload.js"></script>
+
+</head>
+
+<body ng-controller="flowCtrl">
+	
+	<h4>{{welcomeMsg}}</h4>
+	<button type="button" ng-click="login()" ng-hide="isLoggedIn">Login</button>
+
+	<div id="fb-root">
+	</div>
+
+</body>
+
+</html>
