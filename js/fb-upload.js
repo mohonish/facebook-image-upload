@@ -1,59 +1,157 @@
-var app = angular.module('fb-upload',['ngFacebook']);
+angular.module('CiulApp', ['facebook'])
 
-app.config(function($facebookProvider) {
-	$facebookProvider.setAppId('421184968045936');
-});
-
-/* already hardcoded into index.html 
-app.run( function( $rootScope ) {
-  // Load the facebook SDK asynchronously
-  (function(){
-     // If we've already installed the SDK, we're done
-     if (document.getElementById('facebook-jssdk')) {console.log('already done');return;}
-
-     // Get the first script element, which we'll use to find the parent node
-     var firstScriptElement = document.getElementsByTagName('script')[0];
-
-     // Create a new script element and set its id
-     var facebookJS = document.createElement('script'); 
-     facebookJS.id = 'facebook-jssdk';
-
-     // Set the new script's source to the source of the Facebook JS SDK
-     facebookJS.src = '//connect.facebook.net/en_US/all.js';
-
-     // Insert the Facebook JS SDK into the DOM
-     firstScriptElement.parentNode.insertBefore(facebookJS, firstScriptElement);
-   }());
-});
-*/
-
-app.controller('flowCtrl', function ($scope, $facebook) {
-    //Approach: login - authenticate - upload - post.
-  
-    $scope.isLoggedIn = false;
-  
-    $scope.login = function() {
-        console.log("Logging In");
-        $facebook.login().then(function() {
-            console.log("Logged In");
-            refresh();
-        },
-        function(error) {
-            console.log(err);
-        });
-    };
-
-    function refresh() {
-        $facebook.api("/me").then( 
-        function(response) {
-            $scope.welcomeMsg = "Welcome " + response.name;
-            $scope.isLoggedIn = true;
-        },
-        function(err) {
-            $scope.welcomeMsg = "Please log in";
-        });
+  .config([
+    'FacebookProvider',
+    function(FacebookProvider) {
+     var myAppId = '414484898712790';
+     
+     // You can set appId with setApp method
+     // FacebookProvider.setAppId('myAppId');
+     
+     /**
+      * After setting appId you need to initialize the module.
+      * You can pass the appId on the init method as a shortcut too.
+      */
+     FacebookProvider.init(myAppId);
+     
     }
+  ])
+  
+  .controller('MainController', [
+    '$scope',
+    '$timeout',
+    'Facebook',
+    function($scope, $timeout, Facebook) {
+      
+      // Define user empty data :/
+      $scope.user = {};
+      
+      // Defining user logged status
+      $scope.logged = false;
+      
+      // And some fancy flags to display messages upon user status change
+      $scope.byebye = false;
+      $scope.salutation = false;
+      
+      /**
+       * Watch for Facebook to be ready.
+       * There's also the event that could be used
+       */
+      $scope.$watch(
+        function() {
+          return Facebook.isReady();
+        },
+        function(newVal) {
+          if (newVal)
+            $scope.facebookReady = true;
+        }
+      );
+      
+      var userIsConnected = false;
+      
+      Facebook.getLoginStatus(function(response) {
+        if (response.status == 'connected') {
+          userIsConnected = true;
+        }
+      });
+      
+      /**
+       * IntentLogin
+       */
+      $scope.IntentLogin = function() {
+        if(!userIsConnected) {
+          $scope.login();
+        }
+      };
+      
+      /**
+       * Login
+       */
+       $scope.login = function() {
+         Facebook.login(function(response) {
+          if (response.status == 'connected') {
+            $scope.logged = true;
+            $scope.me();
+          }
+        
+        });
+       };
+       
+       /**
+        * me 
+        */
+        $scope.me = function() {
+          Facebook.api('/me', function(response) {
+            /**
+             * Using $scope.$apply since this happens outside angular framework.
+             */
+            $scope.$apply(function() {
+              $scope.user = response;
+            });
+            
+          });
+        };
+      
+      /**
+       * Logout
+       */
+      $scope.logout = function() {
+        Facebook.logout(function() {
+          $scope.$apply(function() {
+            $scope.user   = {};
+            $scope.logged = false;  
+          });
+        });
+      }
+      
+      /**
+       * Taking approach of Events :D
+       */
+      $scope.$on('Facebook:statusChange', function(ev, data) {
+        console.log('Status: ', data);
+        if (data.status == 'connected') {
+          $scope.$apply(function() {
+            $scope.salutation = true;
+            $scope.byebye     = false;    
+          });
+        } else {
+          $scope.$apply(function() {
+            $scope.salutation = false;
+            $scope.byebye     = true;
+            
+            // Dismiss byebye message after two seconds
+            $timeout(function() {
+              $scope.byebye = false;
+            }, 2000)
+          });
+        }
+        
+        
+      });
+      
+      
+    }
+  ])
+  
+  /**
+   * Just for debugging purposes.
+   * Shows objects in a pretty way
+   */
+  .directive('debug', function() {
+        return {
+            restrict:   'E',
+            scope: {
+                expression: '=val'
+            },
+            template:   '<pre>{{debug(expression)}}</pre>',
+            link:   function(scope) {
+                // pretty-prints
+                scope.debug = function(exp) {
+                    return angular.toJson(exp, true);
+                };
+            }
+        }
+    })
+  
+  ;
 
-    refresh();
-
-});
