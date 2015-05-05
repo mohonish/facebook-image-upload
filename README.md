@@ -2,10 +2,14 @@ Facebook Image Upload
 ---------------------
 
 Uses the Graph API to upload images to Facebook album.
+
 Work in Progress.
 
 Status:
-> FB integration wrapper module added.
+> FB integration works on client side only.
 
 ToDo:
-> Add node module structure.
+> Add server-side for image upload.
+
+Thanks to:
+> GoDisco/ngFacebook
